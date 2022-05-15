@@ -26,6 +26,8 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Box } from "@mui/system";
+import CommonTable from "./common/Table/CommonTable";
+import CommonModal from "./common/CommonModal/CommonModal";
 
 const AllData = () => {
   const [selectDept, setSelectDept] = useState();
@@ -137,6 +139,19 @@ const AllData = () => {
   const [selectedOption, setSelectedOption] = useState("");
   const [headValue, setHeadValue] = useState({});
   const [filterDept, setFilterDept] = useState();
+  const [filterTeam, setFilterTeam] = useState();
+  const [tableData, setTableData] = useState(localStorage.getItem("data"));
+
+  useEffect(() => {
+    localStorage.setItem("data", JSON.stringify(employeeData));
+    setTableData(localStorage.getItem("data"));
+  }, [employeeData]);
+
+  // useEffect(() => {
+
+  // }, []);
+
+  console.log("localStorage", localStorage.getItem("data"));
 
   const [anchorEl, setAnchorEl] = useState("");
   // (React.useState < null) | (HTMLElement > null);
@@ -276,6 +291,8 @@ const AllData = () => {
     setOpenEditEmployee((prev) => !prev);
   };
 
+  console.log("tableData", tableData);
+
   // On Edit Employee data change
   const onEditEmployeeChange = (prop, value) => {
     console.log(prop, value);
@@ -301,16 +318,17 @@ const AllData = () => {
         return item;
       }
     });
+    console.log("technologyLeader", technologyLeader);
 
-    if (editEmployee?.empId == technologyLeader[0]?.empId) {
+    if (editEmployee?.empId === technologyLeader[0]?.empId) {
       setCheckLeader((prev) => !prev);
     }
 
     const createNewEmployee = employeeData.filter((item) => {
       if (
-        item.department == inputValue?.department &&
-        item.team == inputValue?.team &&
-        item.designation == "Lead"
+        item.department === inputValue?.department &&
+        item.team === inputValue?.team &&
+        item.designation === "Lead"
       ) {
         return item;
       }
@@ -322,17 +340,28 @@ const AllData = () => {
     }
   }, [editEmployee, employeeData, inputValue]);
 
+  const filterByDepartmentAndTeam = (department, team) => {
+    const filteredData = employeeData.filter((item) => {
+      if (item.department === department && item.team === team) {
+        return item;
+      }
+    });
+    setEmployeeData(filteredData);
+    setOpenFilter(false);
+  };
+
   const handleMenuOptionClick = (option) => {
-    if (option == "Add New Employee") {
+    if (option === "Add New Employee") {
       setOpen(true);
       setSelectedOption("Employee");
       setCreateLeader(false);
+      console.log("button clicked");
     }
-    if (option == "Add New Head") {
+    if (option === "Add New Head") {
       setSelectedOption("Head");
       setOpenAddHead(true);
     }
-    if (option == "Add New Team") {
+    if (option === "Add New Team") {
       setOpenAddTeam(true);
     }
     handleCloseMenu();
@@ -438,51 +467,35 @@ const AllData = () => {
         {/* <MenuItem onClick={handleClose}>My account</MenuItem> */}
         {/* <MenuItem onClick={handleClose}>Logout</MenuItem> */}
       </Menu>
-      <Typography sx={{ p: 2 }}>
-        <TableContainer component={Paper}>
-          <Table sx={{ minWidth: 650 }} aria-label="simple table">
-            <TableHead>
-              <TableRow>
-                {heading.map((item) => {
-                  return (
-                    <TableCell sx={{ fontWeight: "bold" }}>{item}</TableCell>
-                  );
-                })}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {employeeData?.map((row) => (
-                <TableRow
-                  key={row.name}
-                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                >
-                  <TableCell align="">{row.name}</TableCell>
-                  <TableCell align="">{row?.empId}</TableCell>
-                  <TableCell align="">{row.email}</TableCell>
-                  <TableCell align="">{row.phone}</TableCell>
-                  <TableCell align="">
-                    {row.designation == "Head"
-                      ? "Head"
-                      : `Team ${row.designation}`}
-                  </TableCell>
-                  <TableCell align="">{row.department}</TableCell>
-                  <TableCell align="">{row.team}</TableCell>
-                  <TableCell>
-                    <EditIcon
-                      color="primary"
-                      onClick={() => editIconHandler(row.empId)}
-                    />
-                    <DeleteIcon
-                      color="primary"
-                      onClick={() => deleteIconHandler(row.empId)}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Typography>
+      <CommonTable
+        editHandler={editIconHandler}
+        deleteHandler={deleteIconHandler}
+        // employeeData={employeeData.length > 0 ? employeeData : tableData}
+        employeeData={JSON.parse(tableData)}
+        heading={heading}
+      />
+
+      {/* <CommonModal
+        editEmployee={editEmployee}
+        open={open}
+        handleClose={handleClose}
+        onInputChange={onInputChange}
+        btnDisable={btnDisable}
+        AddEmployeeHandler={AddEmployeeHandler}
+        inputValue={inputValue}
+        fullWidth={fullWidth}
+        openEditEmployee={openEditEmployee}
+        handleCloseEdit={handleCloseEdit}
+        onEditEmployeeChange={onEditEmployeeChange}
+        techTeam={techTeam}
+        hrDept={hrDept}
+        hrTeam={hrTeam}
+        checkLeader={checkLeader}
+        createLeader={createLeader}
+        updateEmployeeData={updateEmployeeData}
+        AllDepartment={AllDepartment}
+        designTeam={designTeam}
+      /> */}
 
       <Dialog fullWidth={fullWidth} open={open} onClose={handleClose}>
         <DialogTitle>Add New Employee</DialogTitle>
@@ -592,60 +605,6 @@ const AllData = () => {
             Add
           </Button>
           <Button onClick={handleClose}>Close</Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        fullWidth={fullWidth}
-        open={openAddTeam}
-        onClose={handleCloseAddTeam}
-      >
-        <DialogTitle>Add New Team</DialogTitle>
-        <DialogContent>
-          <Box
-            noValidate
-            component="form"
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              m: "auto",
-            }}
-          >
-            <FormControl fullWidth sx={{ my: 2 }}>
-              <InputLabel id="demo-simple-select-label">Department</InputLabel>
-              <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                label="Department"
-                value={teamValue.department}
-                onChange={(e) =>
-                  // onTeamInputChange("department", e.target.value)
-                  setSelectedDepart(e.target.value)
-                }
-              >
-                <MenuItem value={"Technology"}>Technology</MenuItem>
-                <MenuItem value={"Design"}>Design</MenuItem>
-                <MenuItem value={"HR"}>Staff/HR</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              id="name-input"
-              name="teamName"
-              label="Team Name"
-              type="text"
-              sx={{}}
-              // value={teamValue.teamName}
-              // onChange={(e) => onTeamInputChange("teamName", e.target.value)}
-              value={inputData}
-              onChange={(e) => setInputData(e.target.value)}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" onClick={AddTeamHandler}>
-            Add
-          </Button>
-          <Button onClick={handleCloseAddTeam}>Close</Button>
         </DialogActions>
       </Dialog>
 
@@ -790,6 +749,60 @@ const AllData = () => {
 
       <Dialog
         fullWidth={fullWidth}
+        open={openAddTeam}
+        onClose={handleCloseAddTeam}
+      >
+        <DialogTitle>Add New Team</DialogTitle>
+        <DialogContent>
+          <Box
+            noValidate
+            component="form"
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              m: "auto",
+            }}
+          >
+            <FormControl fullWidth sx={{ my: 2 }}>
+              <InputLabel id="demo-simple-select-label">Department</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                label="Department"
+                value={teamValue.department}
+                onChange={(e) =>
+                  // onTeamInputChange("department", e.target.value)
+                  setSelectedDepart(e.target.value)
+                }
+              >
+                <MenuItem value={"Technology"}>Technology</MenuItem>
+                <MenuItem value={"Design"}>Design</MenuItem>
+                <MenuItem value={"HR"}>Staff/HR</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              id="name-input"
+              name="teamName"
+              label="Team Name"
+              type="text"
+              sx={{}}
+              // value={teamValue.teamName}
+              // onChange={(e) => onTeamInputChange("teamName", e.target.value)}
+              value={inputData}
+              onChange={(e) => setInputData(e.target.value)}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={AddTeamHandler}>
+            Add
+          </Button>
+          <Button onClick={handleCloseAddTeam}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        fullWidth={fullWidth}
         open={openAddHead}
         onClose={() => handleClosePopUp("Add New Head")}
       >
@@ -909,20 +922,21 @@ const AllData = () => {
                 labelId="demo-simple-select-label"
                 id="demo-simple-select"
                 label="Team"
-                value={inputValue.department}
+                value={filterTeam}
+                onChange={(e) => setFilterTeam(e.target.value)}
                 // onChange={(e) => onInputChange("team", e.target.value)}
               >
-                {filterDept == "Technology" &&
+                {filterDept === "Technology" &&
                   techTeam.map((item) => {
                     return <MenuItem value={item}>{item}</MenuItem>;
                   })}
 
-                {filterDept == "Design" &&
+                {filterDept === "Design" &&
                   designTeam.map((item) => {
                     return <MenuItem value={item}>{item}</MenuItem>;
                   })}
 
-                {filterDept == "HR" &&
+                {filterDept === "HR" &&
                   hrTeam.map((item) => {
                     return <MenuItem value={item}>{item}</MenuItem>;
                   })}
@@ -931,6 +945,11 @@ const AllData = () => {
           </Box>
         </DialogContent>
         <DialogActions>
+          <Button
+            onClick={() => filterByDepartmentAndTeam(filterDept, filterTeam)}
+          >
+            Filter
+          </Button>
           <Button onClick={CloseFilterHandler}>Close</Button>
         </DialogActions>
       </Dialog>

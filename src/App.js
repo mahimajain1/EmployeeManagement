@@ -1,11 +1,11 @@
 import logo from "./logo.svg";
 import "./App.css";
-import AllData from "./components/AllData";
+import HomePage from "./components/HomePage";
 
 function App() {
   return (
-    <div>
-      <AllData />
+    <div style={{ padding: "16px 16px" }}>
+      <HomePage />
     </div>
   );
 }
